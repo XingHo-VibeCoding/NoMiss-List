@@ -4,69 +4,193 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NoMiss List</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f7f7f5;
-      color: #2c2c2a;
-      font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
-      padding: 24px;
-    }
-    .card {
-      background: #ffffff;
-      border: 1px solid #e5e4df;
-      border-radius: 16px;
-      padding: 40px 44px;
-      max-width: 520px;
-      width: 100%;
-      text-align: center;
-    }
-    h1 {
-      font-size: 26px;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-      margin-bottom: 10px;
-    }
-    .sub {
-      font-size: 15px;
-      color: #6b6b66;
-      margin-bottom: 28px;
-    }
-    .checks {
-      list-style: none;
-      text-align: left;
-      border-top: 1px solid #eeede9;
-      border-bottom: 1px solid #eeede9;
-      padding: 18px 0;
-      margin-bottom: 24px;
-    }
-    .checks li {
-      font-size: 14px;
-      line-height: 2;
-      color: #444441;
-    }
-    .checks span { color: #1d9e75; font-weight: 600; margin-right: 8px; }
-    .foot {
-      font-size: 13px;
-      color: #96968f;
-    }
-  </style>
+  <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <div class="card">
-    <h1>NoMiss List</h1>
-    <p class="sub">项目已初始化 · Day 2 占位页</p>
-    <ul class="checks">
-      <li><span>✓</span>Git 仓库已建立</li>
-      <li><span>✓</span>Node.js 环境就绪</li>
-      <li><span>✓</span>GitHub 账号已连通</li>
-      <li><span>✓</span>忽略规则已生效</li>
-    </ul>
-    <p class="foot">网站功能将在 Day 7 开始开发</p>
-  </div>
+  <header class="topbar">
+    <div class="brand">NoMiss List</div>
+    <div class="today" id="todayLabel">—</div>
+  </header>
+
+  <nav class="tabs">
+    <a class="tab" href="#home" data-view="home">首页</a>
+    <a class="tab" href="#add" data-view="add">添加任务</a>
+    <a class="tab" href="#detail" data-view="detail">任务详情</a>
+    <a class="tab" href="#settings" data-view="settings">课表与设置</a>
+  </nav>
+
+  <p class="notice" id="notice" hidden></p>
+
+  <main class="page">
+
+    <!-- ① 首页 -->
+    <section class="view" id="view-home">
+
+      <!-- ①-1 今天的建议：唯一一条，字最大，含理由 -->
+      <article class="card card--accent">
+        <p class="card-label">今天的建议</p>
+        <p class="advice-main" id="adviceMain" hidden>—</p>
+        <p class="advice-slot" id="adviceSlot" hidden>—</p>
+        <p class="advice-reason" id="adviceReason" hidden>—</p>
+        <p class="advice-extra" id="adviceExtra" hidden></p>
+        <p class="empty" id="adviceEmpty" hidden>—</p>
+        <div class="actions" id="adviceActions" hidden>
+          <button type="button" class="btn btn--primary" id="btnFollowAdvice">就按这个安排</button>
+        </div>
+      </article>
+
+      <!-- ①-2 段落结算：已排的时段时间到了，只问一句"做完了吗"（仅有时出现） -->
+      <article class="card card--ask" id="cardSettle" hidden>
+        <p class="card-label">刚刚那一段</p>
+        <div id="settleList"></div>
+      </article>
+
+      <!-- ①-3 待重新安排：截止时间已过、且没有后续安排的任务（仅有时出现） -->
+      <article class="card" id="cardReschedule" hidden>
+        <p class="card-label">待重新安排</p>
+        <div id="rescheduleList"></div>
+        <p class="hint">确认之后它才会回到「要做的事」里，在那之前不会再给你建议，免得同一件事重复出现。</p>
+      </article>
+
+      <!-- ①-4 本周大局：负荷 + 冲突（冲突提示是我们唯一的差异点，不缩到看不见） -->
+      <article class="card">
+        <p class="card-label">本周大局</p>
+        <ul class="week" id="weekStrip"></ul>
+        <div id="conflictList"></div>
+        <p class="empty" id="conflictEmpty">未来 7 天没有撞车的事。</p>
+      </article>
+
+      <!-- ①-5 今天的安排：只列时段和事，不说话 -->
+      <article class="card">
+        <p class="card-label">今天的安排</p>
+        <div id="timelineList"></div>
+        <p class="empty" id="timelineEmpty">今天还没有可安排的时段。可以去「课表与设置」调一下每天可用的时间。</p>
+        <p class="hint">有「建议」的时段是系统替你补的位，还没写进你的任务；点上面的按钮才会真的排进去。</p>
+      </article>
+
+      <article class="card">
+        <p class="card-label">要做的事</p>
+        <div id="taskList"></div>
+        <p class="empty" id="taskEmpty">还没有任务。去「添加任务」写下第一件吧——只填名字就能存。</p>
+        <p class="hint" id="taskListHint">「放进今天」会把它排进最近的一段空档里；排不下会告诉你最早什么时候能做。</p>
+      </article>
+
+      <article class="card" id="cardDone" hidden>
+        <p class="card-label">今天完成的</p>
+        <div id="doneList"></div>
+      </article>
+    </section>
+
+    <!-- ② 添加 / 编辑任务 -->
+    <section class="view" id="view-add" hidden>
+      <article class="card">
+        <p class="card-label" id="addCardLabel">添加任务</p>
+        <form class="form" id="taskForm">
+          <label class="field">
+            <span class="field-name">任务名</span>
+            <input type="text" id="fTitle" placeholder="例如：写实验报告" autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="field-name">截止时间 <em>选填</em></span>
+            <input type="datetime-local" id="fDue">
+          </label>
+          <label class="field">
+            <span class="field-name">预计用时（分钟）<em>选填，默认 30</em></span>
+            <input type="number" id="fEstimate" placeholder="30" min="1" step="5">
+          </label>
+          <div class="actions">
+            <button type="submit" class="btn btn--primary" id="btnSave">保存</button>
+            <button type="button" class="btn" id="btnCancel">取消</button>
+          </div>
+        </form>
+        <p class="hint">只有「任务名」是必填。没有分类、没有标签、没有优先级——优先级由系统按紧迫度算，不用你选。</p>
+      </article>
+    </section>
+
+    <!-- ③ 任务详情 -->
+    <section class="view" id="view-detail" hidden>
+      <article class="card">
+        <p class="card-label">任务详情</p>
+        <dl class="detail" id="detailBody">
+          <dt>任务名</dt><dd id="dTitle">—</dd>
+          <dt>截止时间</dt><dd id="dDue">—</dd>
+          <dt>预计用时</dt><dd id="dEstimate">—</dd>
+          <dt>剩余用时</dt><dd id="dRemaining">—</dd>
+          <dt>已排时段</dt><dd id="dSegments">—</dd>
+          <dt>状态</dt><dd id="dStatus">—</dd>
+          <dt>创建时间</dt><dd id="dCreated">—</dd>
+        </dl>
+        <div class="actions" id="detailActions" hidden>
+          <button type="button" class="btn btn--primary" id="btnEdit">修改内容</button>
+          <button type="button" class="btn" id="btnDone">标记完成</button>
+          <button type="button" class="btn" id="btnDelete">删除</button>
+        </div>
+        <p class="empty" id="detailEmpty">从首页点一条任务，就能在这里看它的详情。</p>
+      </article>
+    </section>
+
+    <!-- ④ 课表与设置 -->
+    <section class="view" id="view-settings" hidden>
+      <article class="card">
+        <p class="card-label">每周固定占用（课表）</p>
+        <div class="field-row field-row--block">
+          <select id="bWeekday">
+            <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+            <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="7">周日</option>
+          </select>
+          <input type="time" id="bStart" value="08:00">
+          <input type="time" id="bEnd" value="09:40">
+          <input type="text" id="bTitle" placeholder="课程名">
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="btnAddBlock">新增</button>
+        </div>
+        <div id="blockList"></div>
+        <p class="empty" id="blockEmpty">还没有录入任何固定占用。录一次，之后每周自动重复。</p>
+      </article>
+
+      <article class="card">
+        <p class="card-label">偏好设置</p>
+        <label class="field">
+          <span class="field-name">每天可用的时间起点</span>
+          <input type="time" id="sDayStart" value="08:00">
+        </label>
+        <label class="field">
+          <span class="field-name">每天可用的时间终点</span>
+          <input type="time" id="sDayEnd" value="22:00">
+        </label>
+        <label class="field">
+          <span class="field-name">新任务默认预计用时（分钟）</span>
+          <input type="number" id="sDefaultEstimate" value="30" min="1" step="5">
+        </label>
+        <div class="actions">
+          <button type="button" class="btn btn--primary" id="btnSaveSettings">保存设置</button>
+        </div>
+        <p class="hint">这三项决定了"空档"怎么算。默认值可以直接用，不用配置。</p>
+      </article>
+
+      <article class="card">
+        <p class="card-label">备份</p>
+        <p class="empty">数据只存在这台电脑的这个浏览器里。换电脑、清缓存之前，先导出一份。</p>
+        <div class="actions">
+          <button type="button" class="btn btn--primary" id="btnExport">导出备份</button>
+          <button type="button" class="btn" id="btnImport">导入备份</button>
+        </div>
+        <input type="file" id="fileImport" accept=".json,application/json" hidden>
+        <p class="hint">导出会下载一个 .json 文件，里面是全部任务、课表和设置。导入会用文件里的内容替换现有数据，所以导入前会先问你一次。</p>
+      </article>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>Day 7 第 7 步 · 任务可修改、备份可导出导入</span>
+  </footer>
+
+  <script src="scripts/storage.js"></script>
+  <script src="scripts/model.js"></script>
+  <script src="scripts/scheduler.js"></script>
+  <script src="scripts/views.js"></script>
+  <script src="scripts/main.js"></script>
 </body>
 </html>

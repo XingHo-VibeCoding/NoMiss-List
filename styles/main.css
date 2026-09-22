@@ -1,0 +1,472 @@
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --line: #e5e4df;
+  --line-soft: #eeede9;
+  --text: #2c2c2a;
+  --text-soft: #6b6b66;
+  --text-hint: #96968f;
+  --accent-bg: #e6f1fb;
+  --accent-line: #b5d4f4;
+  --accent-text: #0c447c;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 0 0 40px;
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px 12px;
+}
+
+.brand { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+
+.today { font-size: 13px; color: var(--text-soft); }
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 720px;
+  margin: 0 auto 18px;
+  padding: 0 20px;
+}
+
+.tab {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tab:hover { border-color: #c9c8c2; color: var(--text); }
+
+.tab.is-active {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.card--accent {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+}
+
+.card--accent .card-label { color: var(--accent-text); }
+.card--accent .empty { color: var(--accent-text); }
+.card--accent .hint { color: var(--accent-text); opacity: 0.7; }
+
+.card-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+.empty {
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-hint);
+  margin-top: 10px;
+}
+
+.week {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.week li {
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.week .day-name { display: block; font-size: 12px; color: var(--text-soft); }
+.week .day-num { display: block; font-size: 15px; font-weight: 600; }
+.week li.is-today { background: var(--accent-bg); border-color: var(--accent-line); }
+.week li.is-today .day-name { color: var(--accent-text); }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.field-name { font-size: 13px; color: var(--text-soft); }
+
+.field-name em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-hint);
+}
+
+.field-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.field-row--block { margin-bottom: 10px; }
+
+input, select, button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+input[type="text"], input[type="number"] { width: 100%; }
+
+.field-row input, .field-row select { flex: 1 1 120px; min-width: 0; }
+
+input:disabled, select:disabled {
+  background: #fbfbfa;
+  color: var(--text-hint);
+  cursor: not-allowed;
+}
+
+.actions { display: flex; gap: 8px; margin-top: 12px; }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn--primary { border-color: var(--text); color: var(--text); }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.detail {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px 12px;
+  font-size: 14px;
+}
+
+.detail dt { color: var(--text-soft); }
+.detail dd { color: var(--text); }
+
+.foot {
+  max-width: 720px;
+  margin: 20px auto 0;
+  padding: 0 20px;
+  font-size: 12px;
+  color: var(--text-hint);
+}
+
+@media (max-width: 420px) {
+  .week { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .detail { grid-template-columns: 80px 1fr; }
+}
+
+/* ---------- 以下是第 3 步新增 ---------- */
+
+/*
+ * 这条必须有：像 .detail 这种设了 display:grid 的元素，
+ * 作者样式会盖掉浏览器默认的 [hidden]{display:none}，导致 hidden 失效。
+ */
+[hidden] { display: none !important; }
+
+.notice {
+  max-width: 720px;
+  margin: 0 auto 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.notice--ok {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+  color: var(--accent-text);
+}
+
+.notice--warn {
+  background: #fdf3e3;
+  border-color: #f0d3a8;
+  color: #7a5210;
+}
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+
+.task:first-child { border-top: none; }
+.task:hover { background: #fbfbfa; }
+.task:last-child { border-bottom: none; }
+
+.task-check {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--accent-text);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.task-check:hover { border-color: var(--accent-line); }
+.task--done .task-check { background: var(--accent-bg); border-color: var(--accent-line); }
+
+.task-body { flex: 1 1 auto; min-width: 0; }
+
+.task-title { font-size: 14px; margin: 0; word-break: break-word; }
+
+.task--done .task-title {
+  color: var(--text-hint);
+  text-decoration: line-through;
+}
+
+.task-meta { font-size: 12px; color: var(--text-soft); margin: 2px 0 0; }
+
+.btn--tiny { padding: 4px 10px; font-size: 12px; }
+
+.task .btn--tiny { flex: 0 0 auto; align-self: center; }
+
+/* ---------- 以下是第 5 步新增：建议 / 本周大局 / 今天的安排 ---------- */
+
+/*
+ * 产品红线：这三块里**不出现红色**，也不出现"逾期/失败/未完成"这类词。
+ * "忙"用暖黄表示（是提示，不是责备），"撞车"用虚框表示（是事实，不是警告）。
+ */
+
+/* ①-1 今天的建议 */
+.advice-main {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--accent-text);
+  word-break: break-word;
+}
+
+.advice-slot {
+  font-size: 14px;
+  color: var(--accent-text);
+  margin-top: 6px;
+}
+
+.advice-reason {
+  font-size: 13px;
+  color: var(--accent-text);
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.advice-extra {
+  font-size: 13px;
+  color: var(--accent-text);
+  opacity: 0.85;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--accent-line);
+}
+
+.card--accent .btn--primary { border-color: var(--accent-text); color: var(--accent-text); }
+
+/* ①-2 本周大局 */
+.week .week-day { position: relative; }
+
+.week .load-track {
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.week .load-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent-line);
+}
+
+.week .is-normal .load-fill { background: #9dc4e8; }
+.week .is-busy .load-fill { background: #e0b070; }
+
+.week .load-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-hint);
+}
+
+.week .is-busy .load-text { color: #7a5210; }
+
+.week .has-conflict { border-style: dashed; border-color: #e0b070; }
+
+.conflict {
+  font-size: 13px;
+  color: var(--text-soft);
+  padding: 8px 10px;
+  margin-top: 6px;
+  border-radius: var(--radius-md);
+  background: #fdf8f0;
+  border: 1px dashed #f0d3a8;
+}
+
+/* ①-3 今天的安排 */
+.tl {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+}
+
+.tl:first-child { border-top: none; }
+
+.tl-time {
+  flex: 0 0 96px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-tag {
+  flex: 0 0 auto;
+  width: 34px;
+  text-align: center;
+  font-size: 11px;
+  padding: 1px 0;
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-hint);
+}
+
+.tl-title { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+
+.tl-min {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-hint);
+}
+
+.tl--block .tl-tag { background: var(--line-soft); color: var(--text-soft); }
+.tl--block .tl-title { color: var(--text-soft); }
+.tl--task .tl-tag { background: var(--accent-bg); color: var(--accent-text); }
+.tl--plan .tl-title { color: var(--text); }
+.tl--plan .tl-tag { background: #f4ede1; color: #7a5210; }
+.tl--plan.is-pinned { background: #fbf6ee; }
+.tl--free .tl-title { color: var(--text-hint); }
+.tl--free .tl-tag { background: transparent; border: 1px dashed var(--line); }
+
+/* 撞车的行：说出来，但不用红色、不用感叹号 */
+.tl.has-conflict { background: #fdf8f0; border-left: 3px solid #e0b070; padding-left: 7px; }
+
+.tl-note {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: #7a5210;
+  background: #f6e9d5;
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .tl { flex-wrap: wrap; }
+  .tl-note { white-space: normal; }
+}
+
+/* ---------- 第 6 步新增：段落结算 / 待重新安排 ---------- */
+
+/* 段落结算：只问一句"做完了吗" */
+.card--ask {
+  background: #fbfaf7;
+  border-color: var(--line);
+}
+
+.settle {
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.settle:first-child { border-top: none; padding-top: 0; }
+
+.settle-text {
+  font-size: 14px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.settle .actions { margin-top: 10px; }
+
+.resched {
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.resched:first-child { border-top: none; padding-top: 0; }
+
+.resched-text {
+  font-size: 14px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.resched .actions { margin-top: 10px; }
+
+@media (max-width: 420px) {
+  .tl-time { flex-basis: 82px; }
+  .advice-main { font-size: 18px; }
+}
