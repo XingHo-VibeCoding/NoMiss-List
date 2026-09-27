@@ -20,6 +20,7 @@
   </nav>
 
   <p class="notice" id="notice" hidden></p>
+  <p class="demo-banner" id="demoBanner" hidden></p>
 
   <main class="page">
 
@@ -27,7 +28,7 @@
     <section class="view" id="view-home">
 
       <!-- ①-1 今天的建议：唯一一条，字最大，含理由 -->
-      <article class="card card--accent">
+      <article class="card card--accent" id="cardAdvice">
         <p class="card-label">今天的建议</p>
         <p class="advice-main" id="adviceMain" hidden>—</p>
         <p class="advice-slot" id="adviceSlot" hidden>—</p>
@@ -37,12 +38,14 @@
         <div class="actions" id="adviceActions" hidden>
           <button type="button" class="btn btn--primary" id="btnFollowAdvice">就按这个安排</button>
         </div>
+        <div class="card-state" id="stateAdvice" hidden></div>
       </article>
 
       <!-- ①-2 段落结算：已排的时段时间到了，只问一句"做完了吗"（仅有时出现） -->
       <article class="card card--ask" id="cardSettle" hidden>
         <p class="card-label">刚刚那一段</p>
         <div id="settleList"></div>
+        <div class="card-state" id="stateSettle" hidden></div>
       </article>
 
       <!-- ①-3 待重新安排：截止时间已过、且没有后续安排的任务（仅有时出现） -->
@@ -50,29 +53,35 @@
         <p class="card-label">待重新安排</p>
         <div id="rescheduleList"></div>
         <p class="hint">确认之后它才会回到「要做的事」里，在那之前不会再给你建议，免得同一件事重复出现。</p>
+        <div class="card-state" id="stateReschedule" hidden></div>
       </article>
 
       <!-- ①-4 本周大局：负荷 + 冲突（冲突提示是我们唯一的差异点，不缩到看不见） -->
-      <article class="card">
+      <article class="card" id="cardWeek">
         <p class="card-label">本周大局</p>
         <ul class="week" id="weekStrip"></ul>
         <div id="conflictList"></div>
         <p class="empty" id="conflictEmpty">未来 7 天没有撞车的事。</p>
+        <div class="day-detail" id="dayDetail" hidden></div>
+        <p class="hint">点上面任意一天，可以展开那天的安排；再点一下收起。</p>
+        <div class="card-state" id="stateWeek" hidden></div>
       </article>
 
       <!-- ①-5 今天的安排：只列时段和事，不说话 -->
-      <article class="card">
+      <article class="card" id="cardTimeline">
         <p class="card-label">今天的安排</p>
         <div id="timelineList"></div>
         <p class="empty" id="timelineEmpty">今天还没有可安排的时段。可以去「课表与设置」调一下每天可用的时间。</p>
         <p class="hint">有「建议」的时段是系统替你补的位，还没写进你的任务；点上面的按钮才会真的排进去。</p>
+        <div class="card-state" id="stateTimeline" hidden></div>
       </article>
 
-      <article class="card">
+      <article class="card" id="cardTasks">
         <p class="card-label">要做的事</p>
         <div id="taskList"></div>
         <p class="empty" id="taskEmpty">还没有任务。去「添加任务」写下第一件吧——只填名字就能存。</p>
         <p class="hint" id="taskListHint">「放进今天」会把它排进最近的一段空档里；排不下会告诉你最早什么时候能做。</p>
+        <div class="card-state" id="stateTasks" hidden></div>
       </article>
 
       <article class="card" id="cardDone" hidden>
@@ -98,12 +107,21 @@
             <span class="field-name">预计用时（分钟）<em>选填，默认 30</em></span>
             <input type="number" id="fEstimate" placeholder="30" min="1" step="5">
           </label>
+          <label class="field">
+            <span class="field-name">执行时段 <em>选填——不填也行，交给系统补位</em></span>
+            <div class="field-row">
+              <input type="datetime-local" id="fSegStart">
+              <input type="datetime-local" id="fSegEnd">
+            </div>
+          </label>
           <div class="actions">
             <button type="submit" class="btn btn--primary" id="btnSave">保存</button>
             <button type="button" class="btn" id="btnCancel">取消</button>
+            <button type="button" class="btn" id="btnDeleteInForm" hidden>删除这条任务</button>
           </div>
         </form>
         <p class="hint">只有「任务名」是必填。没有分类、没有标签、没有优先级——优先级由系统按紧迫度算，不用你选。</p>
+        <p class="hint">「执行时段」留空的话，系统会在有空档时替你补位；你自己填了，就以你填的为准。</p>
       </article>
     </section>
 
@@ -131,7 +149,7 @@
 
     <!-- ④ 课表与设置 -->
     <section class="view" id="view-settings" hidden>
-      <article class="card">
+      <article class="card" id="cardBlocks">
         <p class="card-label">每周固定占用（课表）</p>
         <div class="field-row field-row--block">
           <select id="bWeekday">
@@ -147,9 +165,10 @@
         </div>
         <div id="blockList"></div>
         <p class="empty" id="blockEmpty">还没有录入任何固定占用。录一次，之后每周自动重复。</p>
+        <div class="card-state" id="stateBlocks" hidden></div>
       </article>
 
-      <article class="card">
+      <article class="card" id="cardSettings">
         <p class="card-label">偏好设置</p>
         <label class="field">
           <span class="field-name">每天可用的时间起点</span>
@@ -167,6 +186,7 @@
           <button type="button" class="btn btn--primary" id="btnSaveSettings">保存设置</button>
         </div>
         <p class="hint">这三项决定了"空档"怎么算。默认值可以直接用，不用配置。</p>
+        <div class="card-state" id="stateSettings" hidden></div>
       </article>
 
       <article class="card">
@@ -183,12 +203,15 @@
 
   </main>
 
+  <button type="button" class="fab" id="btnQuickAdd">＋ 添加任务</button>
+
   <footer class="foot">
-    <span>Day 7 第 7 步 · 任务可修改、备份可导出导入</span>
+    <span>Day 8 · 四种页面状态 · 演示模式 · 点某天展开安排</span>
   </footer>
 
   <script src="scripts/storage.js"></script>
   <script src="scripts/model.js"></script>
+  <script src="scripts/demo.js"></script>
   <script src="scripts/scheduler.js"></script>
   <script src="scripts/views.js"></script>
   <script src="scripts/main.js"></script>

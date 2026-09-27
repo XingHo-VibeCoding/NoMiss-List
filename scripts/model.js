@@ -192,6 +192,11 @@
       clean.remainingMinutes = Math.round(r);
     }
 
+    // 允许通过表单直接改"已排时段"，但要按同一套规矩校验（起止格式、结束晚于开始）
+    if ('scheduledSegments' in clean) {
+      clean.scheduledSegments = (clean.scheduledSegments || []).map(normalizeSegment);
+    }
+
     // 改了"预计用时"，要和"剩余用时"保持一致——否则会出现"预计 30 分钟、还剩 5 小时"这种自相矛盾。
     // 规矩（按是否已经开动来分）：
     //   · 还没排过任何时段（没开始做）→ 剩余跟着改成新的预计用时
@@ -259,6 +264,19 @@
   /** 取消全部已排时段（让任务回到"还没安排"） */
   function unscheduleTask(id) {
     return storage.updateTask(id, { scheduledSegments: [] });
+  }
+
+  /**
+   * 只取消某一天的已排时段，其它天不动。
+   * 用途：在「修改任务」里把执行时段清空时，只清掉原来那一天的那一段——
+   * 不能顺手把它排在别天的时段也抹掉，那是用户没同意的事。
+   */
+  function unscheduleDay(id, startIso) {
+    var task = findTask(id);
+    if (!task) throw modelError('这条任务找不到了。');
+    var day = dayKey(startIso);
+    var kept = (task.scheduledSegments || []).filter(function (s) { return dayKey(s.start) !== day; });
+    return storage.updateTask(id, { scheduledSegments: kept });
   }
 
   /**
@@ -432,6 +450,7 @@
     findTask: findTask,
     scheduleTaskFor: scheduleTaskFor,
     unscheduleTask: unscheduleTask,
+    unscheduleDay: unscheduleDay,
     settleSegment: settleSegment,
     reconcileOverdue: reconcileOverdue,
     confirmReschedule: confirmReschedule,

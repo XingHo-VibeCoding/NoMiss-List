@@ -438,7 +438,8 @@
   }
 
   /**
-   * 今天的安排（"地图"，弱呈现）：
+   * 某一天的安排（"地图"，弱呈现）。
+   * `date` 可以是今天、明天、或周里任意一天（B1「点某天展开当天安排」靠这个）。
    * 把课、已排任务、系统补位的时段、以及仍然空着的时间，按时间顺序排出来。
    *
    * 可选传入 `advice`（getTodayAdvice 的结果）：顶部那条建议指定的时段会被**原样固定**
@@ -446,9 +447,9 @@
    *
    * 注意：这里算出的补位时段**只是显示**，不会写进数据——你不动它，它就不会改变你的任务。
    */
-  function getTodayTimeline(now, advice) {
+  function getDayTimeline(date, now, advice) {
     var base = now || new Date();
-    var today = startOfDay(base);
+    var today = startOfDay(date || base);
     var settings = model.getSettings();
     var dayStartMin = model.toMinutes(settings.dayStart);
     var dayEndMin = model.toMinutes(settings.dayEnd);
@@ -481,7 +482,8 @@
     // 顶部建议指定的那段，先在地图里钉住
     var pinnedStart = null;
     var pinnedMinutes = 0;
-    if (advice && advice.kind === 'advice' && advice.slot && advice.planMinutes > 0) {
+    if (advice && advice.kind === 'advice' && advice.slot && advice.planMinutes > 0 &&
+        sameDay(today, base)) {   // 只有"今天"才谈得上被那条建议钉住
       pinnedStart = new Date(advice.slot.start).getTime();
       pinnedMinutes = advice.planMinutes;
     }
@@ -553,6 +555,12 @@
       return a.kind === 'free' ? 1 : -1;
     });
     return items;
+  }
+
+  /** 今天的安排（大部分地方用这个就够了） */
+  function getTodayTimeline(now, advice) {
+    var base = now || new Date();
+    return getDayTimeline(base, base, advice);
   }
 
   /* ================= 放不下时：最早可行时间 ================= */
@@ -670,6 +678,7 @@
 
     getTodayAdvice: getTodayAdvice,
     getTodayTimeline: getTodayTimeline,
+    getDayTimeline: getDayTimeline,
     planToday: getTodayTimeline,
     predictNextAvailable: predictNextAvailable,
     getPendingSettlements: getPendingSettlements,

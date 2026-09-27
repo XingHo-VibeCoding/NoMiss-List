@@ -19,8 +19,29 @@
   /** 正在修改的任务 id；为空表示"添加新任务"模式 */
   var editingTaskId = null;
 
+  /** 进入修改模式时，那条任务原有执行时段属于哪一天（用于"只是改名字"时不去动它） */
+  var editingSegmentDay = null;
+
+  /** 进入修改模式时，那一段的开始时刻（用来判断用户有没有改动执行时段） */
+  var editingSegmentStart = null;
+
+  /** 本周大局里被点开的那一天（ISO 日期字符串；空表示都收起） */
+  var selectedDayKey = null;
+
   /** 事件是否已经绑过（防重复绑定，见 bindEvents） */
   var bound = false;
+
+  /**
+   * 演示模式下的"加载中"：两个变量配合，缺一不可。
+   *
+   *   loadingDemoPlayed —— 计时器只武装一次（否则每渲染一次就重新计时，永远转下去）
+   *   loadingDemoUntil  —— 在这个时间点之前，不管重画几次都显示加载中
+   *
+   * 为什么要后者：首屏其实会被渲染两次（视图初始化一次、随后视图切换逻辑又一次），
+   * 用"只演一次"的布尔标记会被第二次立刻冲掉——真机上同样如此。
+   */
+  var loadingDemoPlayed = false;
+  var loadingDemoUntil = 0;
 
   /** 首页顶部那条建议的当前结果，供「就按这个安排」按钮读取 */
   var currentAdvice = null;
@@ -265,6 +286,95 @@
     showNotice(e && e.message ? e.message : '这一步没算出来，稍后再看一次。', 'warn');
   }
 
+  /* ---------- 区块的四种状态：加载中 / 成功 / 空 / 出错 ---------- */
+
+  /**
+   * 每个区块在卡片内部都留了一个"状态位"。
+   *
+   * 为什么必须做在卡片里，而不是像以前那样顶部飘一条提示：
+   * 顶部那条 6 秒后自己消失，而卡里还留着上一次的数据——用户会以为看到的是新的，
+   * 其实是旧的。**这比白屏更危险，因为白屏至少你知道出事了。**
+   */
+  var CARDS = {
+    advice: { card: 'cardAdvice', state: 'stateAdvice' },
+    settle: { card: 'cardSettle', state: 'stateSettle' },
+    reschedule: { card: 'cardReschedule', state: 'stateReschedule' },
+    week: { card: 'cardWeek', state: 'stateWeek' },
+    timeline: { card: 'cardTimeline', state: 'stateTimeline' },
+    tasks: { card: 'cardTasks', state: 'stateTasks' },
+    blocks: { card: 'cardBlocks', state: 'stateBlocks' },
+    settings: { card: 'cardSettings', state: 'stateSettings' }
+  };
+
+  /** 当前是不是演示模式（平时返回空字符串） */
+  function currentDemoMode() {
+    return (window.NoMissDemo && window.NoMissDemo.mode) || '';
+  }
+
+  /** 回到"正常渲染"的样子：撤掉加载中 / 出错状态（.is-state 会把卡里其余内容藏起来） */
+  function clearCardState(key) {
+    var ref = CARDS[key];
+    if (!ref) return;
+    var card = el(ref.card);
+    var st = el(ref.state);
+    if (card) card.classList.remove('is-state');
+    if (st) { st.hidden = true; st.innerHTML = ''; }
+  }
+
+  /** 在卡片内部显示"出错"，并给一个「重新试一次」——比顶部那句话有用 */
+  function failCard(key, e) {
+    var ref = CARDS[key];
+    if (!ref) return;
+    var card = el(ref.card);
+    var st = el(ref.state);
+    if (!card || !st) return;
+
+    card.hidden = false;
+    card.classList.add('is-state');
+    st.innerHTML = '';
+    st.hidden = false;
+
+    var msg = document.createElement('p');
+    msg.className = 'card-state-msg';
+    msg.textContent = (e && e.message) ? e.message : '这一步没算出来。';
+
+    var actions = document.createElement('div');
+    actions.className = 'actions';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--tiny';
+    btn.textContent = '重新试一次';
+    btn.addEventListener('click', function () { renderAll(); });
+    actions.appendChild(btn);
+
+    st.appendChild(msg);
+    st.appendChild(actions);
+  }
+
+  /** 在卡片内部显示"加载中" */
+  function loadingCard(key) {
+    var ref = CARDS[key];
+    if (!ref) return;
+    var card = el(ref.card);
+    var st = el(ref.state);
+    if (!card || !st) return;
+
+    card.hidden = false;
+    card.classList.add('is-state');
+    st.innerHTML = '';
+    st.hidden = false;
+
+    var msg = document.createElement('p');
+    msg.className = 'card-state-msg';
+    msg.textContent = '正在读取…';
+
+    var bar = document.createElement('div');
+    bar.className = 'loading-bar';
+
+    st.appendChild(msg);
+    st.appendChild(bar);
+  }
+
   /** 组装"最早可以安排……"这句话 */
   function nextAvailableText(prefix, next) {
     if (!next || !next.slot) return prefix + ' 最近两周都没找到合适的时段。';
@@ -287,6 +397,7 @@
     var actionsEl = el('adviceActions');
 
     currentAdvice = null;
+    clearCardState('advice');
     mainEl.hidden = true;
     slotEl.hidden = true;
     reasonEl.hidden = true;
@@ -295,7 +406,8 @@
     emptyEl.hidden = false;
 
     if (failure || !adv) {
-      emptyEl.textContent = (failure && failure.message) ? failure.message : '这一步没算出来，稍后再看一次。';
+      emptyEl.hidden = true;
+      failCard('advice', failure);
       return;
     }
 
@@ -360,6 +472,7 @@
   function renderWeek() {
     var list = el('weekStrip');
     if (!list) return;
+    clearCardState('week');
     try {
       var now = new Date();
       var days = [];
@@ -367,14 +480,27 @@
 
       var load = scheduler.getWeekLoad(now, 7);
       var conflicts = scheduler.detectConflicts(days);
+
+      // 先把要算的都算完再清空画面——反过来的话，一旦中间出错，
+      // 卡里会留着上一次的数据，看起来像"一切正常"。
       list.innerHTML = '';
 
       load.forEach(function (d, idx) {
         var n = conflicts.filter(function (c) { return c.date === d.date; }).length;
+        var opened = (selectedDayKey === d.date);
         var li = document.createElement('li');
-        li.className = 'week-day is-' + d.level + (idx === 0 ? ' is-today' : '') + (n ? ' has-conflict' : '');
+        li.className = 'week-day is-' + d.level + (idx === 0 ? ' is-today' : '') +
+                       (n ? ' has-conflict' : '') + (opened ? ' is-open' : '');
         li.title = d.label + ' · 已占用 ' + fmtMinutes(d.occupiedMinutes) +
-                   (n ? ' · ' + n + ' 处时间重叠' : '');
+                   (n ? ' · ' + n + ' 处时间重叠' : '') + ' · 点一下看这天的安排';
+
+        // 点一下展开那天的安排，再点一下收起（B1）
+        li.addEventListener('click', (function (key) {
+          return function () {
+            selectedDayKey = (selectedDayKey === key) ? null : key;
+            renderWeek();
+          };
+        })(d.date));
 
         var name = document.createElement('span');
         name.className = 'day-name';
@@ -417,74 +543,138 @@
       var emptyEl = el('conflictEmpty');
       if (emptyEl) emptyEl.hidden = conflicts.length > 0;
 
+      renderDayDetail();
+
     } catch (e) {
-      reportCalcError(e);
+      failCard('week', e);
     }
+  }
+
+  /* ---------- 可复用组件：时间线的"一段"与"一整块" ---------- */
+
+  var TL_TAG = { block: '课', task: '已排', plan: '建议', free: '空' };
+
+  /**
+   * 组件①：时间线上的一行。
+   *
+   * 为什么要抽出来：「今天的安排」和「点某天展开的那一天」画的是**同一件事**，
+   * 只有日期不同。不抽的话就是把这段拼装代码抄第二遍——以后改一处忘一处。
+   */
+  function timelineRow(item, conflicts, dateKey) {
+    var row = document.createElement('div');
+    row.className = 'tl tl--' + item.kind + (item.pinned ? ' is-pinned' : '');
+
+    var time = document.createElement('span');
+    time.className = 'tl-time';
+    time.textContent = hm(item.start) + '–' + hm(item.end);
+
+    var tag = document.createElement('span');
+    tag.className = 'tl-tag';
+    tag.textContent = TL_TAG[item.kind] || '';
+
+    var title = document.createElement('span');
+    title.className = 'tl-title';
+    title.textContent = item.kind === 'free' ? '这段时间空着' : item.title;
+
+    row.appendChild(time);
+    row.appendChild(tag);
+    row.appendChild(title);
+
+    // 撞了就直接在这一行说出来——竞品只给你一张图，让你自己看
+    var other = conflictPartnerOf(conflicts, dateKey, item);
+    if (other) {
+      row.className += ' has-conflict';
+      var note = document.createElement('span');
+      note.className = 'tl-note';
+      note.textContent = '与「' + other + '」时间重叠';
+      row.appendChild(note);
+    } else {
+      var mins = document.createElement('span');
+      mins.className = 'tl-min';
+      mins.textContent = fmtMinutes(item.minutes);
+      row.appendChild(mins);
+    }
+    return row;
+  }
+
+  /**
+   * 组件②：把"某一天的安排"填进一个容器里。
+   *
+   * 注意这里刻意**不返回一个包裹层**——直接往容器里填。
+   * 多包一层看着无害，但会让样式里的 ":first-child"、以及"取直接子节点"的代码全部错位。
+   */
+  function fillTimeline(box, items, conflicts, dateKey) {
+    box.innerHTML = '';
+    items.forEach(function (it) { box.appendChild(timelineRow(it, conflicts, dateKey)); });
   }
 
   /** ①-3 今天的安排：只列时段和事，不喊口号 */
   function renderTimeline(adv) {
     var box = el('timelineList');
     if (!box) return;
-    var TAG = { block: '课', task: '已排', plan: '建议', free: '空' };
+    clearCardState('timeline');
     try {
       var now = new Date();
       var items = scheduler.getTodayTimeline(now, adv);
       var todayKey = scheduler.isoDay(now);
-
-      // 今天的冲突，用来在对应行旁边标一句"和谁撞了"
       var todaysConflicts = scheduler.detectConflicts([now]);
 
-      box.innerHTML = '';
       var emptyEl = el('timelineEmpty');
       if (!items.length) {
+        box.innerHTML = '';
         if (emptyEl) emptyEl.hidden = false;
         return;
       }
       if (emptyEl) emptyEl.hidden = true;
 
-      items.forEach(function (it) {
-        var row = document.createElement('div');
-        row.className = 'tl tl--' + it.kind + (it.pinned ? ' is-pinned' : '');
-
-        var time = document.createElement('span');
-        time.className = 'tl-time';
-        time.textContent = hm(it.start) + '–' + hm(it.end);
-
-        var tag = document.createElement('span');
-        tag.className = 'tl-tag';
-        tag.textContent = TAG[it.kind] || '';
-
-        var title = document.createElement('span');
-        title.className = 'tl-title';
-        title.textContent = it.kind === 'free' ? '这段时间空着' : it.title;
-
-        var mins = document.createElement('span');
-        mins.className = 'tl-min';
-        mins.textContent = fmtMinutes(it.minutes);
-
-        row.appendChild(time);
-        row.appendChild(tag);
-        row.appendChild(title);
-
-        // 撞了就直接在这行说出来——竞品只给你一张图让你自己看
-        var other = conflictPartnerOf(todaysConflicts, todayKey, it);
-        if (other) {
-          row.className += ' has-conflict';
-          var note = document.createElement('span');
-          note.className = 'tl-note';
-          note.textContent = '与「' + other + '」时间重叠';
-          row.appendChild(note);
-        } else {
-          row.appendChild(mins);
-        }
-
-        box.appendChild(row);
-      });
+      fillTimeline(box, items, todaysConflicts, todayKey);
 
     } catch (e) {
-      reportCalcError(e);
+      failCard('timeline', e);
     }
+  }
+
+  /**
+   * ①-4b 点某天展开：把"那一天"的安排画在周条下面。
+   * 用的是和「今天的安排」完全相同的组件，所以两处的样子天然一致。
+   */
+  function renderDayDetail() {
+    var box = el('dayDetail');
+    if (!box) return;
+
+    if (!selectedDayKey) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+
+    box.hidden = false;
+    box.innerHTML = '';
+
+    var now = new Date();
+    var date = new Date(selectedDayKey + 'T00:00:00');
+
+    var head = document.createElement('p');
+    head.className = 'day-detail-head';
+    box.appendChild(head);
+
+    var items;
+    try {
+      items = scheduler.getDayTimeline(date, now);
+    } catch (e) {
+      head.textContent = (e && e.message) ? e.message : '这一天的安排没算出来。';
+      return;
+    }
+
+    if (!items.length) {
+      head.textContent = dayLabelOf(selectedDayKey, now) + '：这一天没有可安排的时段。';
+      return;
+    }
+    head.textContent = dayLabelOf(selectedDayKey, now) + ' 的安排（共 ' + items.length + ' 段）';
+
+    var list = document.createElement('div');
+    box.appendChild(list);
+    fillTimeline(list, items, scheduler.detectConflicts([date]), selectedDayKey);
   }
 
   /**
@@ -499,10 +689,11 @@
     if (!card || !box) return;
 
     var list;
+    clearCardState('settle');
     try {
       list = scheduler.getPendingSettlements(new Date());
     } catch (e) {
-      reportCalcError(e);
+      failCard('settle', e);
       return;
     }
 
@@ -603,10 +794,11 @@
     if (!card || !box) return;
 
     var list;
+    clearCardState('reschedule');
     try {
       list = scheduler.getRescheduleSuggestions(new Date());
     } catch (e) {
-      reportCalcError(e);
+      failCard('reschedule', e);
       return;
     }
 
@@ -662,7 +854,54 @@
     });
   }
 
+  /** 首页「要做的事」区块：单独拆出来，它出错时不至于把整页拖垮 */
+  function renderTaskList() {
+    clearCardState('tasks');
+    var pending, doneToday;
+    try {
+      var tasks = model.listTasks();
+      pending = tasks.filter(function (t) { return t.status !== 'done'; });
+      doneToday = tasks.filter(function (t) { return t.status === 'done' && isToday(t.completedAt); });
+      fillTaskList('taskList', 'taskEmpty', pending, null, { allowSchedule: true });
+    } catch (e) {
+      failCard('tasks', e);
+      return;
+    }
+
+    var hint = el('taskListHint');
+    if (hint) hint.hidden = pending.length === 0;
+
+    var cardDone = el('cardDone');
+    var doneBox = el('doneList');
+    if (cardDone && doneBox) {
+      doneBox.innerHTML = '';
+      if (doneToday.length) {
+        cardDone.hidden = false;
+        doneToday.forEach(function (t) { doneBox.appendChild(buildTaskRow(t)); });
+      } else {
+        cardDone.hidden = true;
+      }
+    }
+  }
+
   function renderHome() {
+    // 演示模式：先把"加载中"演一遍再继续。
+    // 说明白：这一帧在真实使用时几乎看不见（本地读取是瞬时的），
+    // 它真正有用的时候是阶段二接了云数据库——那时候等待是真实存在的。
+    var demo = currentDemoMode();
+    if (demo === 'loading') {
+      var holdMs = (window.NoMissDemo && window.NoMissDemo.loadingHoldMs) || 1200;
+      if (!loadingDemoPlayed) {
+        loadingDemoPlayed = true;
+        loadingDemoUntil = Date.now() + holdMs;
+        setTimeout(function () { renderAll(); }, holdMs);
+      }
+      if (Date.now() < loadingDemoUntil) {
+        ['advice', 'settle', 'reschedule', 'week', 'timeline', 'tasks'].forEach(loadingCard);
+        return;
+      }
+    }
+
     // 先做一次"截止时间已过"的核对：它只改状态，不改任何数值。
     // 没被核对到就渲染，等于用旧状态画界面，下一帧又变了，看起来会像界面在闪。
     safely(function () { return model.reconcileOverdue(new Date()); });
@@ -680,26 +919,7 @@
     renderReschedule();
     renderWeek();
     renderTimeline(adv);
-
-    var tasks = model.listTasks();
-    var pending = tasks.filter(function (t) { return t.status !== 'done'; });
-    var doneToday = tasks.filter(function (t) { return t.status === 'done' && isToday(t.completedAt); });
-
-    fillTaskList('taskList', 'taskEmpty', pending, null, { allowSchedule: true });
-    var hint = el('taskListHint');
-    if (hint) hint.hidden = pending.length === 0;
-
-    var cardDone = el('cardDone');
-    var doneBox = el('doneList');
-    if (cardDone && doneBox) {
-      doneBox.innerHTML = '';
-      if (doneToday.length) {
-        cardDone.hidden = false;
-        doneToday.forEach(function (t) { doneBox.appendChild(buildTaskRow(t)); });
-      } else {
-        cardDone.hidden = true;
-      }
-    }
+    renderTaskList();
   }
 
   /* ---------- 详情渲染 ---------- */
@@ -743,7 +963,15 @@
     var box = el('blockList');
     var emptyEl = el('blockEmpty');
     if (!box) return;
-    var blocks = model.listBlocks();
+    clearCardState('blocks');
+
+    var blocks;
+    try {
+      blocks = model.listBlocks();
+    } catch (e) {
+      failCard('blocks', e);
+      return;
+    }
     box.innerHTML = '';
     if (!blocks.length) {
       if (emptyEl) emptyEl.hidden = false;
@@ -785,7 +1013,14 @@
   }
 
   function renderSettingsFields() {
-    var s = model.getSettings();
+    clearCardState('settings');
+    var s;
+    try {
+      s = model.getSettings();
+    } catch (e) {
+      failCard('settings', e);
+      return;
+    }
     el('sDayStart').value = s.dayStart;
     el('sDayEnd').value = s.dayEnd;
     el('sDefaultEstimate').value = s.defaultEstimate;
@@ -810,8 +1045,19 @@
     el('fTitle').value = task.title;
     el('fDue').value = toLocalInputValue(task.dueAt);
     el('fEstimate').value = task.estimateMinutes;
+
+    // 回填"最近一段"的执行时段。
+    // 注意：这里只显示一段，但**没改动就不会去动其它段**（见提交处的判断）——
+    // 否则编辑一次任务名，就会把它排在别天的时段悄悄抹掉。
+    var seg = (task.scheduledSegments || [])[0] || null;
+    el('fSegStart').value = seg ? toLocalInputValue(seg.start) : '';
+    el('fSegEnd').value = seg ? toLocalInputValue(seg.end) : '';
+    editingSegmentDay = seg ? scheduler.isoDay(new Date(seg.start)) : null;
+    editingSegmentStart = seg ? seg.start : null;
+
     el('addCardLabel').textContent = '修改任务';
     el('btnSave').textContent = '保存修改';
+    el('btnDeleteInForm').hidden = false;
     location.hash = '#add';
   }
 
@@ -821,8 +1067,13 @@
     el('fTitle').value = '';
     el('fDue').value = '';
     el('fEstimate').value = '';
+    el('fSegStart').value = '';
+    el('fSegEnd').value = '';
     el('addCardLabel').textContent = '添加任务';
     el('btnSave').textContent = '保存';
+    el('btnDeleteInForm').hidden = true;
+    editingSegmentDay = null;
+    editingSegmentStart = null;
   }
 
   /** ISO 时间 → datetime-local 输入框要的格式（本地时区，形如 2026-09-23T14:30） */
@@ -892,11 +1143,20 @@
 
   /* ---------- 总刷新 ---------- */
 
+  /**
+   * 全部重画。
+   *
+   * 一块一块各管各的：某个区块出错，只影响它自己那张卡——
+   * 以前是一条错误就把后面全带停，页面会停在"画了一半"的样子。
+   */
   function renderAll() {
-    renderHome();
-    renderDetail();
-    renderBlocks();
-    renderSettingsFields();
+    [renderHome, renderDetail, renderBlocks, renderSettingsFields].forEach(function (fn) {
+      try {
+        fn();
+      } catch (e) {
+        reportCalcError(e);
+      }
+    });
   }
 
   /* ---------- 事件绑定 ---------- */
@@ -919,9 +1179,40 @@
             dueAt: el('fDue').value || null,
             estimateMinutes: el('fEstimate').value || null
           };
-          return editing
-            ? model.updateTask(editing, payload)
-            : model.addTask(payload);
+
+          // —— 执行时段：只有用户真的动过它，才去碰数据 ——
+          // 这条判断很重要：否则"只改个任务名"也会把这条任务排在别天的时段悄悄抹掉。
+          var rawStart = el('fSegStart').value;
+          var rawEnd = el('fSegEnd').value;
+          var wantSeg = !!(rawStart || rawEnd);
+          var segChanged = true;
+
+          if (wantSeg && (!rawStart || !rawEnd)) {
+            throw new Error('执行时段要填就填完整：开始和结束两个都填上。');
+          }
+          if (wantSeg && new Date(rawEnd).getTime() <= new Date(rawStart).getTime()) {
+            throw new Error('执行时段的结束时间要晚于开始时间，改一下就能存。');
+          }
+
+          var newStartIso = wantSeg ? new Date(rawStart).toISOString() : null;
+          var newEndIso = wantSeg ? new Date(rawEnd).toISOString() : null;
+          if (editing) {
+            segChanged = (newStartIso !== editingSegmentStart);
+          }
+
+          if (!editing) {
+            // 新建：直接跟着任务一起写进去
+            if (wantSeg) payload.scheduledSegments = [{ start: newStartIso, end: newEndIso }];
+            return model.addTask(payload);
+          }
+
+          var updated = model.updateTask(editing, payload);
+          if (segChanged) {
+            updated = wantSeg
+              ? model.scheduleTaskFor(editing, newStartIso, newEndIso)          // 替换那一天，其它天不动
+              : (editingSegmentStart ? model.unscheduleDay(editing, editingSegmentStart) : updated);
+          }
+          return updated;
         });
 
         if (!saved) return;
@@ -939,6 +1230,32 @@
       btnCancel.addEventListener('click', function () {
         resetAddForm();
         location.hash = '#home';
+      });
+    }
+
+    var btnQuickAdd = el('btnQuickAdd');
+    if (btnQuickAdd) {
+      btnQuickAdd.addEventListener('click', function () {
+        resetAddForm();
+        location.hash = '#add';
+      });
+    }
+
+    var btnDeleteInForm = el('btnDeleteInForm');
+    if (btnDeleteInForm) {
+      btnDeleteInForm.addEventListener('click', function () {
+        var id = editingTaskId;
+        if (!id) return;
+        var t = model.findTask(id);
+        if (!t) return;
+        if (!window.confirm('删掉「' + t.title + '」？这是唯一会问你一次的操作。')) return;
+        var ok = safely(function () { return model.removeTask(id); }, '已删除');
+        if (ok !== null) {
+          resetAddForm();
+          selectedTaskId = null;
+          location.hash = '#home';
+          renderAll();
+        }
       });
     }
 
@@ -1049,6 +1366,14 @@
   function init() {
     // 首次运行就把三条默认值落盘，避免后面到处判断"有没有"
     safely(function () { return model.ensureDefaults(); });
+
+    // 演示模式：顶部挂一条横幅，随时提醒"你现在看的不是真实数据"
+    var banner = el('demoBanner');
+    if (banner && window.NoMissDemo && window.NoMissDemo.isActive) {
+      banner.textContent = window.NoMissDemo.banner;
+      banner.hidden = false;
+    }
+
     bindEvents();
     renderAll();
   }
