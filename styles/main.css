@@ -5,7 +5,7 @@
   --line-soft: #eeede9;
   --text: #2c2c2a;
   --text-soft: #6b6b66;
-  --text-hint: #96968f;
+  --text-hint: #84847e;
   --accent-bg: #e6f1fb;
   --accent-line: #b5d4f4;
   --accent-text: #0c447c;
@@ -34,22 +34,22 @@ body {
   padding: 20px 20px 12px;
 }
 
-.brand { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.brand { font-size: 20px; font-weight: 500; letter-spacing: -0.3px; }
 
 .today { font-size: 13px; color: var(--text-soft); }
 
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   max-width: 720px;
-  margin: 0 auto 18px;
+  margin: 0 auto 16px;
   padding: 0 20px;
 }
 
 .tab {
   flex: 0 0 auto;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -73,14 +73,14 @@ body {
   padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 18px 20px;
+  padding: 16px 20px;
 }
 
 .card--accent {
@@ -90,32 +90,32 @@ body {
 
 .card--accent .card-label { color: var(--accent-text); }
 .card--accent .empty { color: var(--accent-text); }
-.card--accent .hint { color: var(--accent-text); opacity: 0.7; }
+.card--accent .hint { color: var(--accent-text); opacity: 0.85; }
 
 .card-label {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--text-soft);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .empty {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-soft);
 }
 
 .hint {
   font-size: 12px;
-  color: var(--text-hint);
-  margin-top: 10px;
+  color: var(--text-soft);
+  margin-top: 8px;
 }
 
 .week {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -123,30 +123,30 @@ body {
   background: var(--bg);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
-  padding: 8px 6px;
+  padding: 8px;
   text-align: center;
 }
 
 .week .day-name { display: block; font-size: 12px; color: var(--text-soft); }
-.week .day-num { display: block; font-size: 15px; font-weight: 600; }
+.week .day-num { display: block; font-size: 15px; font-weight: 500; }
 .week li.is-today { background: var(--accent-bg); border-color: var(--accent-line); }
 .week li.is-today .day-name { color: var(--accent-text); }
 
-.form { display: flex; flex-direction: column; gap: 14px; }
+.form { display: flex; flex-direction: column; gap: 16px; }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
 
 .field-name { font-size: 13px; color: var(--text-soft); }
 
 .field-name em {
   font-style: normal;
   font-size: 12px;
-  color: var(--text-hint);
+  color: var(--text-soft);
 }
 
 .field-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.field-row--block { margin-bottom: 10px; }
+.field-row--block { margin-bottom: 8px; }
 
 input, select, button {
   font: inherit;
@@ -154,7 +154,7 @@ input, select, button {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 8px 10px;
+  padding: 8px 12px;
 }
 
 input[type="text"], input[type="number"] { width: 100%; }
@@ -175,7 +175,7 @@ input:disabled, select:disabled {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--text-soft);
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -187,7 +187,7 @@ input:disabled, select:disabled {
   display: grid;
   grid-template-columns: 96px 1fr;
   gap: 8px 12px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .detail dt { color: var(--text-soft); }
@@ -216,8 +216,8 @@ input:disabled, select:disabled {
 
 .notice {
   max-width: 720px;
-  margin: 0 auto 14px;
-  padding: 10px 14px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--line);
   background: var(--surface);
@@ -240,8 +240,8 @@ input:disabled, select:disabled {
 .task {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
+  gap: 8px;
+  padding: 8px 0;
   border-top: 1px solid var(--line-soft);
   cursor: pointer;
 }
@@ -269,7 +269,7 @@ input:disabled, select:disabled {
 
 .task-body { flex: 1 1 auto; min-width: 0; }
 
-.task-title { font-size: 14px; margin: 0; word-break: break-word; }
+.task-title { font-size: 15px; margin: 0; word-break: break-word; }
 
 .task--done .task-title {
   color: var(--text-hint);
@@ -278,7 +278,7 @@ input:disabled, select:disabled {
 
 .task-meta { font-size: 12px; color: var(--text-soft); margin: 2px 0 0; }
 
-.btn--tiny { padding: 4px 10px; font-size: 12px; }
+.btn--tiny { padding: 4px 12px; font-size: 12px; }
 
 .task .btn--tiny { flex: 0 0 auto; align-self: center; }
 
@@ -292,16 +292,16 @@ input:disabled, select:disabled {
 /* ①-1 今天的建议 */
 .advice-main {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.4;
   color: var(--accent-text);
   word-break: break-word;
 }
 
 .advice-slot {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--accent-text);
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .advice-reason {
@@ -328,7 +328,7 @@ input:disabled, select:disabled {
 .week .load-track {
   display: block;
   height: 4px;
-  margin-top: 6px;
+  margin-top: 8px;
   border-radius: 2px;
   background: var(--line-soft);
   overflow: hidden;
@@ -357,8 +357,8 @@ input:disabled, select:disabled {
 .conflict {
   font-size: 13px;
   color: var(--text-soft);
-  padding: 8px 10px;
-  margin-top: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
   border-radius: var(--radius-md);
   background: #fdf8f0;
   border: 1px dashed #f0d3a8;
@@ -368,10 +368,10 @@ input:disabled, select:disabled {
 .tl {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  padding: 7px 0;
+  gap: 8px;
+  padding: 8px 0;
   border-top: 1px solid var(--line-soft);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .tl:first-child { border-top: none; }
@@ -390,7 +390,7 @@ input:disabled, select:disabled {
   padding: 1px 0;
   border-radius: 4px;
   background: var(--bg);
-  color: var(--text-hint);
+  color: var(--text-soft);
 }
 
 .tl-title { flex: 1 1 auto; min-width: 0; word-break: break-word; }
@@ -411,7 +411,7 @@ input:disabled, select:disabled {
 .tl--free .tl-tag { background: transparent; border: 1px dashed var(--line); }
 
 /* 撞车的行：说出来，但不用红色、不用感叹号 */
-.tl.has-conflict { background: #fdf8f0; border-left: 3px solid #e0b070; padding-left: 7px; }
+.tl.has-conflict { background: #fdf8f0; border-left: 3px solid #e0b070; padding-left: 8px; }
 
 .tl-note {
   flex: 0 0 auto;
@@ -419,7 +419,7 @@ input:disabled, select:disabled {
   color: #7a5210;
   background: #f6e9d5;
   border-radius: 4px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   white-space: nowrap;
 }
 
@@ -437,38 +437,37 @@ input:disabled, select:disabled {
 }
 
 .settle {
-  padding: 10px 0;
+  padding: 8px 0;
   border-top: 1px solid var(--line-soft);
 }
 
 .settle:first-child { border-top: none; padding-top: 0; }
 
 .settle-text {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   word-break: break-word;
 }
 
-.settle .actions { margin-top: 10px; }
+.settle .actions { margin-top: 8px; }
 
 .resched {
-  padding: 10px 0;
+  padding: 8px 0;
   border-top: 1px solid var(--line-soft);
 }
 
 .resched:first-child { border-top: none; padding-top: 0; }
 
 .resched-text {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   word-break: break-word;
 }
 
-.resched .actions { margin-top: 10px; }
+.resched .actions { margin-top: 8px; }
 
 @media (max-width: 420px) {
   .tl-time { flex-basis: 82px; }
-  .advice-main { font-size: 18px; }
 }
 
 /* ---------- 第 8 步新增：区块的四种状态 + 演示模式 ---------- */
@@ -485,7 +484,7 @@ input:disabled, select:disabled {
 .card-state { padding: 4px 0 2px; }
 
 .card-state-msg {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-soft);
   word-break: break-word;
 }
@@ -495,7 +494,7 @@ input:disabled, select:disabled {
 /* 加载条：一道来回走的细光带。不做"转圈"是因为它更适合窄卡片 */
 .loading-bar {
   height: 3px;
-  margin-top: 10px;
+  margin-top: 8px;
   border-radius: 2px;
   background: var(--line-soft);
   overflow: hidden;
@@ -526,8 +525,8 @@ input:disabled, select:disabled {
 /* 演示模式的横幅：一直在那儿，提醒"这不是你的真实数据" */
 .demo-banner {
   max-width: 720px;
-  margin: 0 auto 14px;
-  padding: 10px 14px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   border: 1px dashed #e0b070;
   background: #fdf8f0;
@@ -548,7 +547,7 @@ input:disabled, select:disabled {
 /* 展开的那一天：和「今天的安排」用同一套组件画的 */
 .day-detail {
   margin-top: 12px;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px dashed var(--line);
 }
 
@@ -564,12 +563,12 @@ input:disabled, select:disabled {
   right: 20px;
   bottom: 20px;
   z-index: 10;
-  padding: 10px 18px;
+  padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid var(--text);
   background: var(--text);
   color: #fff;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
@@ -577,5 +576,39 @@ input:disabled, select:disabled {
 .fab:hover { opacity: 0.92; }
 
 @media (max-width: 420px) {
-  .fab { right: 14px; bottom: 14px; padding: 9px 14px; font-size: 13px; }
+  .fab { right: 14px; bottom: 14px; padding: 8px 12px; font-size: 13px; }
 }
+
+/* ---------- Day 9 改动 B：补齐可点元素的四种状态 ---------- */
+
+/*
+ * 键盘聚焦框。只在"用键盘操作"时出现（按 Tab 走到谁身上），鼠标点击不会冒出来——
+ * 这是 :focus-visible 的设计意图，所以它不会干扰日常使用。
+ *
+ * 颜色刻意用 --accent-text 而不是同族的 --accent-line：
+ * 焦点框要求与背景至少 3:1，而 --accent-line 在白底上只有 1.53:1，等于画了也看不见。
+ */
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+/* 主按钮 / 次按钮：原来连悬停都没有，是这次最明显的缺口 */
+.btn:hover { border-color: #c9c8c2; color: var(--text); }
+.btn:active {
+  background: var(--line-soft);
+  border-color: var(--text);
+  color: var(--text);
+}
+
+/* 顶部标签页 */
+.tab:active { background: var(--line-soft); }
+
+/* 任务左边那个打勾圆点 */
+.task-check:active { background: var(--line-soft); }
+
+/* 周条上的每一天 */
+.week .week-day:active { background: var(--line-soft); }
+
+/* 右下角常驻按钮：原来悬停只是改透明度，补一个按下反馈 */
+.fab:active { opacity: 0.85; }

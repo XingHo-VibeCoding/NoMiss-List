@@ -28,6 +28,14 @@
   /** 本周大局里被点开的那一天（ISO 日期字符串；空表示都收起） */
   var selectedDayKey = null;
 
+  /**
+   * 周条上每一天的元素，按日期存一份。
+   * 用途只在键盘操作：按下回车切换后，renderWeek 会把整块重画（旧元素全没了），
+   * 必须在新画出来的那一批里把焦点放回同一天，否则焦点会掉到页面开头，
+   * 用户每看一天就得重新 Tab 一遍。
+   */
+  var dayElByKey = {};
+
   /** 事件是否已经绑过（防重复绑定，见 bindEvents） */
   var bound = false;
 
@@ -155,6 +163,12 @@
     var row = document.createElement('div');
     row.className = 'task' + (task.status === 'done' ? ' task--done' : '');
 
+    // 键盘可达：这一行本身是可点的（点开详情），所以它必须能用 Tab 走到。
+    // 注意只加 tabIndex 不够 —— div 不会自己响应回车，下面还要手动接 keydown。
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-label', '打开任务详情：' + task.title);
+
     var check = document.createElement('button');
     check.type = 'button';
     check.className = 'task-check';
@@ -215,10 +229,17 @@
       row.appendChild(put);
     }
 
-    row.addEventListener('click', function () {
+    function openDetail() {
       selectedTaskId = task.id;
       location.hash = '#detail';
       renderDetail();
+    }
+    row.addEventListener('click', openDetail);
+    row.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        openDetail();
+      }
     });
 
     return row;
@@ -484,6 +505,7 @@
       // 先把要算的都算完再清空画面——反过来的话，一旦中间出错，
       // 卡里会留着上一次的数据，看起来像"一切正常"。
       list.innerHTML = '';
+      dayElByKey = {};   // 旧元素已经被丢掉，索引一起清掉，免得 focus 到不在页面上的节点
 
       load.forEach(function (d, idx) {
         var n = conflicts.filter(function (c) { return c.date === d.date; }).length;
@@ -495,12 +517,26 @@
                    (n ? ' · ' + n + ' 处时间重叠' : '') + ' · 点一下看这天的安排';
 
         // 点一下展开那天的安排，再点一下收起（B1）
-        li.addEventListener('click', (function (key) {
-          return function () {
-            selectedDayKey = (selectedDayKey === key) ? null : key;
-            renderWeek();
-          };
-        })(d.date));
+        // 键盘同样可达：Tab 走到某一天、按回车即可展开
+        li.tabIndex = 0;
+        li.setAttribute('role', 'button');
+        li.setAttribute('aria-label', '看 ' + d.label + ' 的安排');
+
+        function toggleDay() {
+          selectedDayKey = (selectedDayKey === d.date) ? null : d.date;
+          renderWeek();
+          var back = dayElByKey[d.date];
+          if (back && back.focus) back.focus();
+        }
+        li.addEventListener('click', toggleDay);
+        li.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleDay();
+          }
+        });
+
+        dayElByKey[d.date] = li;
 
         var name = document.createElement('span');
         name.className = 'day-name';
